@@ -12,17 +12,15 @@ test_integration:
     - docker load -i image.tar
     # Generate a dummy config for testing
     - mkdir -p configs
-    - |
-      cat <<EOF > configs/wg0.conf
-      [Interface]
-      PrivateKey = aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-      ListenPort = 51820
-      Address = 10.0.0.1/24
-      Jc = 5
-      Jmin = 50
-      Jmax = 1000
-      EOF
+    - echo "[Interface]" > configs/wg0.conf
+    - echo "PrivateKey = aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" >> configs/wg0.conf
+    - echo "ListenPort = 51820" >> configs/wg0.conf
+    - echo "Address = 10.0.0.1/24" >> configs/wg0.conf
+    - echo "Jc = 5" >> configs/wg0.conf
+    - echo "Jmin = 50" >> configs/wg0.conf
+    - echo "Jmax = 1000" >> configs/wg0.conf
+    - chmod 600 configs/wg0.conf
     # Run container with NET_ADMIN to verify it starts and processes config
     # We use a timeout to let it start and then kill it, verifying success if it didn't crash immediately.
-    - timeout 10s docker run --rm --cap-add=NET_ADMIN --device=/dev/net/tun -v $(pwd)/configs:/config $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA || [ $? -eq 143 ]
+    - timeout 10s docker run --rm --cap-add=NET_ADMIN --device=/dev/net/tun -v $(pwd)/configs:/config $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA || test $? -eq 143
     - echo "Integration test passed: Container started and accepted params"
