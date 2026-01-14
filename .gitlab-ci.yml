@@ -1,4 +1,5 @@
 stages:
+  - pre-build
   - build
   - test
   - security
@@ -11,9 +12,17 @@ include:
   - local: "/.gitlab/ci/release.yml"
   - template: Security/SAST.gitlab-ci.yml
   - template: Jobs/Secret-Detection.gitlab-ci.yml
+  - template: Jobs/Dependency-Scanning.gitlab-ci.yml
 
 variables:
   GITLAB_ADVANCED_SAST_ENABLED: "true"
 
+# Override templates to run in pre-build stage
 sast:
-  stage: security
+  stage: pre-build
+
+secret_detection:
+  stage: pre-build
+
+dependency_scanning:
+  stage: pre-build

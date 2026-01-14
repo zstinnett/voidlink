@@ -8,9 +8,12 @@ trivy_scan:
   script:
     # 1. Generate report for GitLab Dashboard (exit code 0)
     - trivy image --input image.tar --format template --template "@/contrib/gitlab.tpl" -o gl-container-scanning-report.json
-    # 2. Print results to console and fail on Critical/High (exit code 1)
+    # 2. Generate SBOM (CycloneDX)
+    - trivy image --input image.tar --format cyclonedx --output gl-sbom-report.cdx.json
+    # 3. Print results to console and fail on Critical/High (exit code 1)
     - trivy image --input image.tar --exit-code 1 --severity CRITICAL,HIGH
   artifacts:
     when: always
     reports:
       container_scanning: gl-container-scanning-report.json
+      cyclonedx: gl-sbom-report.cdx.json
