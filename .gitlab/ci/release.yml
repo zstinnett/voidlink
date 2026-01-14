@@ -12,7 +12,8 @@ release_latest:
   script:
     - docker load -i image.tar
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker login -u $DEST_USER -p $DEST_PASSWORD $DEST_REGISTRY
+    # Use GitLab Job Token for authentication (works if DEST_REGISTRY is on this GitLab instance)
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $DEST_REGISTRY
     - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $DEST_REGISTRY/voidlink/amneziawg-go:latest
     - docker push $DEST_REGISTRY/voidlink/amneziawg-go:latest
     - |
