@@ -1,0 +1,9 @@
+trivy_scan:
+  stage: security
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  dependencies:
+    - build
+  script:
+    - trivy image --input image.tar --exit-code 1 --severity CRITICAL,HIGH

@@ -1,0 +1,20 @@
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+bin/
+
+# Test/Debug
+runner
+amneziawg-go
+*.test
+*.out
+
+# Configs (User provided)
+configs/
+*.conf
+
+# IDEs
+.vscode/
+.idea/

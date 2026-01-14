@@ -1,0 +1,28 @@
+test_integration:
+  stage: test
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  dependencies:
+    - build
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - docker load -i image.tar
+    # Generate a dummy config for testing
+    - mkdir -p configs
+    - |
+      cat <<EOF > configs/wg0.conf
+      [Interface]
+      PrivateKey = aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      ListenPort = 51820
+      Address = 10.0.0.1/24
+      Jc = 5
+      Jmin = 50
+      Jmax = 1000
+      EOF
+    # Run container with NET_ADMIN to verify it starts and processes config
+    # We use a timeout to let it start and then kill it, verifying success if it didn't crash immediately.
+    - timeout 10s docker run --rm --cap-add=NET_ADMIN --device=/dev/net/tun -v $(pwd)/configs:/config $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA || [ $? -eq 143 ]
+    - echo "Integration test passed: Container started and accepted params"
