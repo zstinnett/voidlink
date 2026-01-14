@@ -14,11 +14,17 @@ RUN CGO_ENABLED=0 go build -o /usr/bin/amneziawg-go ./cmd/runner
 # We use wolfi-base to allow installing packages (iproute2) while keeping it minimal.
 FROM cgr.dev/chainguard/wolfi-base:latest
 
-# Install iproute2 for 'ip' command support
-RUN apk add --no-cache iproute2
+# Install iproute2 for 'ip' command support and libcap-utils for setting capabilities
+RUN apk add --no-cache iproute2 libcap-utils
 
 # Copy the binary
 COPY --from=builder /usr/bin/amneziawg-go /usr/bin/amneziawg-go
+
+# Grant various networking capabilities to the binary so it can run as non-root
+# CAP_NET_ADMIN: Create TUN interface, modify IP addresses/routes
+# We also set it on the 'ip' binary so the executed commands work
+RUN setcap cap_net_admin=+ep /usr/bin/amneziawg-go && \
+    setcap cap_net_admin=+ep $(which ip)
 
 # Set working directory to configuration volume
 WORKDIR /config
