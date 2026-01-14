@@ -1,4 +1,5 @@
 stages:
+  - secrets
   - pre-build
   - build
   - test
@@ -12,17 +13,23 @@ include:
   - local: "/.gitlab/ci/release.yml"
   - template: Security/SAST.gitlab-ci.yml
   - template: Jobs/Secret-Detection.gitlab-ci.yml
-  - template: Jobs/Dependency-Scanning.gitlab-ci.yml
 
 variables:
   GITLAB_ADVANCED_SAST_ENABLED: "true"
 
-# Override templates to run in pre-build stage
+# 1. Run Secrets check FIRST (Fail cheapest/fastest)
+secret_detection:
+  stage: secrets
+
+# 2. Run Static Analysis & Dependency checks
 sast:
   stage: pre-build
 
-secret_detection:
+# Replace Deprecated Gemnasium with Trivy FS Scan
+trivy_fs_scan:
   stage: pre-build
-
-dependency_scanning:
-  stage: pre-build
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  script:
+    - trivy fs . --exit-code 1 --severity CRITICAL,HIGH --scanners vuln,config
