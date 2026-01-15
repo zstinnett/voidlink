@@ -60,7 +60,24 @@ func main() {
 
 	// 2. Extract Interface params for UAPI and System setup
 	ifaceSection := cfg.Section("Interface")
-	privateKey := ifaceSection.Key("PrivateKey").String()
+	// Extract Private Key (Precedence: Env Var > Env File > Config File)
+	privateKey := os.Getenv("WG_PRIVATE_KEY")
+	if privateKey == "" {
+		keyFile := os.Getenv("WG_PRIVATE_KEY_FILE")
+		if keyFile != "" {
+			content, err := os.ReadFile(keyFile)
+			if err != nil {
+				log.Printf("Create warning: Could not read key file %s: %v", keyFile, err)
+			} else {
+				privateKey = strings.TrimSpace(string(content))
+			}
+		}
+	}
+	// Fallback to config file
+	if privateKey == "" {
+		privateKey = ifaceSection.Key("PrivateKey").String()
+	}
+
 	listenPort := ifaceSection.Key("ListenPort").MustInt(51820)
 	fwMark := ifaceSection.Key("FwMark").MustInt(0)
 	addresses := ifaceSection.Key("Address").Strings(",")

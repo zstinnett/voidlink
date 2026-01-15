@@ -1,0 +1,26 @@
+services:
+  voidlink:
+    image: gcr.dontfail.net/apps/voidlink:latest
+    container_name: voidlink
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - "51820:51820/udp"
+    volumes:
+      # Use a bind mount for the config file structure
+      - ./config:/config
+    environment:
+      # Option 1: Direct Env Var
+      - WG_PRIVATE_KEY=${WG_PRIVATE_KEY}
+      # Option 2: File path (useful for Docker Secrets or mounted volumes)
+      # - WG_PRIVATE_KEY_FILE=/run/secrets/wg_private_key
+    env_file:
+      # Option 3: Load environment variables from a file
+      - .env
+    restart: unless-stopped
+    sysctls:
+      # NET_ADMIN capability usually handles internal stack, but enabling forwarding is critical.
+      # In rootless Podman, this may be ignored or require specific host configuration.
+      - net.ipv4.ip_forward=1
