@@ -37,7 +37,7 @@ USER 65532:65532
 
 # Basic healthcheck to ensure binary is executable
 HEALTHCHECK --interval=30s --timeout=3s \
-    CMD /usr/bin/amneziawg-go --help || exit 1
+    CMD ip link show wg0 || exit 1
 
 # Entrypoint
 ENTRYPOINT ["/usr/bin/amneziawg-go"]
