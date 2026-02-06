@@ -1,4 +1,4 @@
-# Voidlink
+# Distroless AmneziaWG-Go on Wolfi
 
 This project provides a secure, minimal, and distroless container image for running [AmneziaWG](https://github.com/amnezia-vpn/amneziawg-go) (a WireGuard fork with obfuscation). It is built on top of [Chainguard Wolfi](https://edu.chainguard.dev/open-source/wolfi/overview/) and uses a custom Go runner to handle configuration natively.
 
@@ -56,7 +56,7 @@ This project provides a secure, minimal, and distroless container image for runn
       --device=/dev/net/tun \
       -v $(pwd)/wg0.conf:/config/wg0.conf:ro \
       -p 51820:51820/udp \
-      gcr.dontfail.net/apps/voidlink:latest
+      $$IMAGE_NAME$$
     ```
 
 ## Configuration Parameters
@@ -156,21 +156,6 @@ docker run -d \
   -v $(pwd)/wg0.conf:/config/wg0.conf:ro \
   $$IMAGE_NAME$$
 ```
-
-### 5. Updates & Scanning
-
-- Container images are scanned with **Trivy** for `CRITICAL` and `HIGH` vulnerabilities
-- Base images from Chainguard provide automatic security updates
-- GitLab CI includes **SAST** (Static Application Security Testing)
-- Scheduled pipelines rebuild nightly to catch upstream updates
-
-### 6. Logging Security
-
-- Log level set to `Error` by default to avoid leaking sensitive information
-- Private keys are never logged
-- For debugging, set environment variable `WG_DEBUG=1` (dev environments only)
-
-
 
 ### Build Locally
 ```bash
