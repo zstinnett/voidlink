@@ -83,11 +83,6 @@ This project provides a secure, minimal, and distroless container image for runn
 # Required: 0600 or more restrictive
 chmod 600 wg0.conf
 ```
-
-**Never Commit Secrets**: Do NOT commit configuration files with real private keys to version control.
-- Use `.gitignore` to exclude `*.conf` files
-- Use secrets management for production deployments
-
 ### 2. Secrets Management
 
 **Docker Swarm**:
@@ -130,15 +125,7 @@ spec:
       secretName: amneziawg-config
       defaultMode: 0600
 ```
-
-### 3. Input Validation
-
-The runner automatically validates:
-- ✅ IP addresses (CIDR format) to prevent command injection
-- ✅ Amnezia parameters (`Jmin < Jmax`)
-- ✅ Config file permissions (0600 required)
-
-### 4. Network Isolation
+### 3. Network Isolation
 
 **Production Deployment**:
 - Use dedicated network namespaces
@@ -165,10 +152,6 @@ go build ./cmd/runner
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Repository
-
-- **Source**: [$$REPO_URL$$]($$REPO_URL$$)
 
 ## License
 
