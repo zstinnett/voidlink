@@ -16,7 +16,7 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /usr/bin/amnezia
 # We use wolfi-base to allow installing packages (iproute2) while keeping it minimal.
 FROM cgr.dev/chainguard/wolfi-base:latest
 
-LABEL org.opencontainers.image.source $$REPO_URL$$
+LABEL org.opencontainers.image.source = "$$REPO_URL$$"
 
 # Install iproute2 for 'ip' command support and libcap-utils for setting capabilities
 RUN apk add --no-cache iproute2 libcap-utils
