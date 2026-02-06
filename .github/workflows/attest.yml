@@ -33,18 +33,32 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
 
+      - name: Wait for image and get digest
+        id: digest
+        run: |
+          IMAGE="ghcr.io/${{ github.repository }}:latest"
+          echo "Waiting for $IMAGE to be available in GHCR..."
+          for i in {1..20}; do
+            if docker pull "$IMAGE" > /dev/null 2>&1; then
+              DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE" | cut -d'@' -f2)
+              if [ -n "$DIGEST" ]; then
+                echo "Found digest: $DIGEST"
+                echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+                exit 0
+              fi
+            fi
+            echo "Attempt $i: Image not ready yet. Waiting 30s..."
+            sleep 30
+          done
+          echo "Error: Image $IMAGE not found in GHCR after 10 minutes."
+          exit 1
+
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
         with:
-          image: ghcr.io/${{ github.repository }}:latest
+          image: ghcr.io/${{ github.repository }}@${{ steps.digest.outputs.digest }}
           format: "spdx-json"
           output-file: "sbom.spdx.json"
-
-      - name: Get image digest
-        id: digest
-        run: |
-          DIGEST=$(docker pull ghcr.io/${{ github.repository }}:latest | grep Digest: | cut -d' ' -f2)
-          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
       - name: Attest Artifact
         uses: actions/attest-sbom@v2
