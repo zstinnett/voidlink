@@ -20,7 +20,7 @@ mirror_to_github:
 
       git config user.name "GitLab CI"
       git config user.email "ci@gitlab.dontfail.us"
-      git add README.md Dockerfile
+      git add README.md Dockerfile .github/workflows/
       git commit -m "docs: bake image name and repo URLs for release" || echo "No changes to mirror files"
       git push --force github HEAD:refs/heads/$CI_COMMIT_REF_NAME
   allow_failure: true
