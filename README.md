@@ -166,6 +166,10 @@ go build ./cmd/runner
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+## Repository
+
+- **Source**: [$$REPO_URL$$]($$REPO_URL$$)
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

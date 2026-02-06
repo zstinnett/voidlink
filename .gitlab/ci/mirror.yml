@@ -13,11 +13,14 @@ mirror_to_github:
       git fetch --unshallow origin || git fetch origin # Ensure we have history
 
       IMAGE_NAME=$(echo "ghcr.io/$GITHUB_USER/voidlink" | tr '[:upper:]' '[:lower:]')
-      sed -i "s|\$\$IMAGE_NAME\$\$|$IMAGE_NAME:latest|g" README.md
+      REPO_URL="https://github.com/$GITHUB_USER/voidlink"
+      # Use character classes to safely match $$ without shell/regex escaping hell
+      sed -i "s|[\$\$][\$\$]IMAGE_NAME[\$\$][\$\$]|$IMAGE_NAME:latest|g" README.md
+      sed -i "s|[\$\$][\$\$]REPO_URL[\$\$][\$\$]|$REPO_URL|g" Dockerfile README.md
 
       git config user.name "GitLab CI"
       git config user.email "ci@gitlab.dontfail.us"
-      git add README.md
-      git commit -m "docs: bake image name for GitHub release" || echo "No changes to README"
+      git add README.md Dockerfile
+      git commit -m "docs: bake image name and repo URLs for release" || echo "No changes to mirror files"
       git push --force github HEAD:refs/heads/$CI_COMMIT_REF_NAME
   allow_failure: true
