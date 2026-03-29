@@ -45,7 +45,7 @@ This project provides a secure, minimal, and distroless container image for runn
       --device=/dev/net/tun \
       -v $(pwd)/wg0.conf:/config/wg0.conf:ro \
       -p 51820:51820/udp \
-      $$IMAGE_NAME$$
+      ghcr.io/zstinnett/voidlink:latest
     ```
 
 3.  **Run with Podman (Rootless)**:
@@ -56,7 +56,7 @@ This project provides a secure, minimal, and distroless container image for runn
       --device=/dev/net/tun \
       -v $(pwd)/wg0.conf:/config/wg0.conf:ro \
       -p 51820:51820/udp \
-      $$IMAGE_NAME$$
+      ghcr.io/zstinnett/voidlink:latest
     ```
 
 ## Configuration Parameters
@@ -89,7 +89,7 @@ chmod 600 wg0.conf
 ```yaml
 services:
   amneziawg:
-    image: $$IMAGE_NAME$$
+    image: ghcr.io/zstinnett/voidlink:latest
     secrets:
       - wg0_config
     command: ["/config/wg0.conf"]
@@ -141,7 +141,7 @@ docker run -d \
   --read-only \
   --security-opt=no-new-privileges \
   -v $(pwd)/wg0.conf:/config/wg0.conf:ro \
-  $$IMAGE_NAME$$
+  ghcr.io/zstinnett/voidlink:latest
 ```
 
 ### Build Locally

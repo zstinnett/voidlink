@@ -16,7 +16,7 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /usr/bin/amnezia
 # We use wolfi-base to allow installing packages (iproute2) while keeping it minimal.
 FROM cgr.dev/chainguard/wolfi-base:latest
 
-LABEL org.opencontainers.image.source = "$$REPO_URL$$"
+LABEL org.opencontainers.image.source = "https://github.com/zstinnett/voidlink"
 LABEL org.opencontainers.image.licenses = "MIT"
 LABEL org.opencontainers.image.title = "voidlink"
 LABEL org.opencontainers.image.description = "Secure, minimal, and distroless container image for running AmneziaWG (a WireGuard fork with obfuscation)"
