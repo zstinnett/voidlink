@@ -1,0 +1,19 @@
+renovate:
+  stage: renovate
+  image: ghcr.io/renovatebot/renovate:sha256-0b3e7682ff0666c85ebc722d493434b2c808e0509ea8b0f32f04fa8dcf5c9ead
+  inherit:
+    variables: false
+  variables:
+    RENOVATE_PLATFORM: gitlab
+    RENOVATE_ENDPOINT: https://gitlab.dontfail.us/api/v4
+    RENOVATE_TOKEN: $CI_JOB_TOKEN
+    RENOVATE_AUTODISCOVER: "false"
+    RENOVATE_REPOSITORIES: '["apps/voidlink"]'
+    LOG_LEVEL: info
+  script:
+    - renovate
+  rules:
+    # Run on a schedule (set up in GitLab CI/CD → Schedules)
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    # Allow manual trigger from the GitLab UI at any time
+    - if: $CI_PIPELINE_SOURCE == "web"

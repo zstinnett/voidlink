@@ -1,8 +1,15 @@
 mirror_to_github:
   stage: release
   image:
-    name: alpine/git:latest
+    name: cgr.dev/chainguard/git:latest
     entrypoint: [""]
+  # Mirror only needs GitHub credentials — no Docker registry access required.
+  inherit:
+    variables: false
+  variables:
+    GITHUB_REPO: "$GITHUB_REPO"
+    GITHUB_USER: "$GITHUB_USER"
+    GITHUB_TOKEN: "$GITHUB_TOKEN"
   script:
     - |
       if [ -z "$GITHUB_REPO" ] || [ -z "$GITHUB_USER" ] || [ -z "$GITHUB_TOKEN" ]; then

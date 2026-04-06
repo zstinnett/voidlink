@@ -3,6 +3,9 @@ build:
   image: docker:24.0.5
   services:
     - docker:24.0.5-dind
+  # Exclude GitHub release secrets — build only needs GitLab registry access.
+  inherit:
+    variables: false
   variables:
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: ""

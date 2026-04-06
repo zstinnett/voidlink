@@ -1,8 +1,12 @@
 trivy_scanning:
   stage: security
   image:
-    name: aquasec/trivy:latest
+    name: aquasec/trivy:0.49.1@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c
     entrypoint: [""]
+  # Only pass registry creds needed to pull the image being scanned.
+  # GITHUB_TOKEN, GITHUB_USER, and other release secrets are explicitly excluded.
+  inherit:
+    variables: false
   variables:
     TRIVY_USERNAME: "$CI_REGISTRY_USER"
     TRIVY_PASSWORD: "$CI_REGISTRY_PASSWORD"

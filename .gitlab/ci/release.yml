@@ -3,6 +3,9 @@ gl_release:
   image: docker:24.0.5
   services:
     - docker:24.0.5-dind
+  # GitLab release only needs GitLab registry credentials — no GitHub secrets.
+  inherit:
+    variables: false
   variables:
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: ""
@@ -24,9 +27,15 @@ gh_release:
   image: docker:24.0.5
   services:
     - docker:24.0.5-dind
+  # GitHub release needs GITHUB_TOKEN/GITHUB_USER AND registry creds to copy
+  # the image across. No other custom secrets are required.
+  inherit:
+    variables: false
   variables:
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: ""
+    GITHUB_USER: "$GITHUB_USER"
+    GITHUB_TOKEN: "$GITHUB_TOKEN"
   script:
     - |
       if [ -z "$GITHUB_USER" ] || [ -z "$GITHUB_TOKEN" ]; then

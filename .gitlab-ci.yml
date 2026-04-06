@@ -5,6 +5,7 @@ stages:
   - test
   - security
   - release
+  - renovate
 
 include:
   - local: "/.gitlab/ci/build.yml"
@@ -12,6 +13,7 @@ include:
   - local: "/.gitlab/ci/security.yml"
   - local: "/.gitlab/ci/release.yml"
   - local: "/.gitlab/ci/mirror.yml"
+  - local: "/.gitlab/ci/renovate.yml"
   - template: Security/SAST.gitlab-ci.yml
   - template: Jobs/Secret-Detection.gitlab-ci.yml
 
@@ -26,11 +28,17 @@ secret_detection:
 sast:
   stage: pre-build
 
-# Replace Deprecated Gemnasium with Trivy FS Scan
 trivy_fs_scan:
   stage: pre-build
   image:
-    name: aquasec/trivy:latest
+    name: aquasec/trivy:0.49.1@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c
     entrypoint: [""]
+  # Deny all inherited custom CI/CD variables — this job scans local source
+  # only and needs zero credentials. GitLab predefined vars (CI_*) are still
+  # available but our custom secrets (GITHUB_TOKEN, registry creds, etc.) are not.
+  inherit:
+    variables: false
+  variables:
+    TRIVY_NO_PROGRESS: "true"
   script:
     - trivy fs . --exit-code 1 --severity CRITICAL,HIGH --scanners vuln,misconfig
