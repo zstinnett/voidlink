@@ -46,6 +46,27 @@ secret_detection:
         mv .gitlab/ruleset.toml.tmp .gitlab/secret-detection-ruleset.toml
       fi
 
+# 2. Gatekeeper: Fail if ANY secrets were discovered
+enforce_secrets_gate:
+  stage: pre-build # Execute before Build to prevent leaking secrets into images
+  image: cgr.dev/chainguard/wolfi-base:latest
+  dependencies:
+    - secret_detection
+  script:
+    - |
+      if [ -f gl-secret-detection-report.json ]; then
+        apk add --no-cache jq
+        COUNT=$(jq '.vulnerabilities | length' gl-secret-detection-report.json)
+        if [ "$COUNT" -ne 0 ]; then
+          echo "FATAL: $COUNT secret(s) detected in the repository!"
+          echo "Pipeline halted to prevent supply chain contamination."
+          exit 1
+        fi
+        echo "No secrets found. Proceeding..."
+      else
+        echo "Warning: Secret detection report not found. Skipping gate check."
+      fi
+
 # 2. Run Static Analysis & Dependency checks
 sast:
   stage: pre-build
