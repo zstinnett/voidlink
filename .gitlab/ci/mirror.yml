@@ -1,12 +1,14 @@
 mirror_to_github:
   stage: release
-  image:
-    name: cgr.dev/chainguard/git:latest
-    entrypoint: [""]
+  # alpine:3.19 provides sh, git, grep, mkdir, sed, tr, awk — all required by the
+  # GitLab CI runner wrapper AND our script. cgr.dev/chainguard/git is distroless
+  # and lacks even mkdir, causing exit 127 before user code runs.
+  image: cgr.dev/chainguard/wolfi-base:latest
   id_tokens:
     VAULT_ID_TOKEN:
       aud: "voidlink-github-release"
-  # Mirror only needs GitHub credentials and OpenBao. No Docker registry access required.
+  # Pass only the required project variables.
+  # inherit: variables: false + "$VAR" re-declarations does NOT expand project vars; use the list form.
   inherit:
     variables: false
   variables:
@@ -14,36 +16,58 @@ mirror_to_github:
     GITHUB_USER: "$GITHUB_USER"
     OPENBAO_ADDR: "$OPENBAO_ADDR"
     GITHUB_INSTALLATION_ID: "$GITHUB_INSTALLATION_ID"
+    GIT_DEPTH: "0"
   script:
-    - apk add --no-cache curl jq
+    - apk add --no-cache git curl jq
     - |
       if [ -z "$GITHUB_REPO" ] || [ -z "$GITHUB_USER" ] || [ -z "$OPENBAO_ADDR" ]; then
-        echo "GitHub logic (GITHUB_REPO, GITHUB_USER, OPENBAO_ADDR) not set. Skipping mirror."
+        echo "GitHub vars (GITHUB_REPO, GITHUB_USER, OPENBAO_ADDR) not set. Skipping mirror."
         exit 0
       fi
-      
+
       echo "Authenticating via OpenBao JWT..."
-      BAO_TOKEN=$(curl -s --request POST --data '{"jwt":"'"$VAULT_ID_TOKEN"'","role":"voidlink-ci"}' $OPENBAO_ADDR/v1/auth/jwt/login | jq -r .auth.client_token)
+      BAO_RESPONSE=$(curl -sf --request POST \
+        --data "{\"jwt\":\"$VAULT_ID_TOKEN\",\"role\":\"voidlink-ci\"}" \
+        "$OPENBAO_ADDR/v1/auth/jwt/login")
+      BAO_TOKEN=$(echo "$BAO_RESPONSE" | jq -r .auth.client_token)
+      if [ -z "$BAO_TOKEN" ] || [ "$BAO_TOKEN" = "null" ]; then
+        echo "ERROR: OpenBao JWT login failed. Response: $BAO_RESPONSE"
+        exit 1
+      fi
+
       echo "Fetching dynamic GitHub token..."
-      curl -s --request POST --header "X-Vault-Token: $BAO_TOKEN" --data '{"installation_id":"'"$GITHUB_INSTALLATION_ID"'"}' $OPENBAO_ADDR/v1/github/token | jq -r .data.token | tr -d '\n' > /dev/shm/ghtoken.txt
-      
-      # Use the ephemeral token for the remote, then quickly revoke it from GitHub
-      git remote add github https://$GITHUB_USER:$(cat /dev/shm/ghtoken.txt)@$GITHUB_REPO
-      git fetch --unshallow origin || git fetch origin # Ensure we have history
-      
-      echo "Revoking token at GitHub..."
-      curl -s -X DELETE -H "Authorization: Bearer $(cat /dev/shm/ghtoken.txt)" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/installation/token || true
-      rm -f /dev/shm/ghtoken.txt
+      GH_RESPONSE=$(curl -sf --request POST \
+        --header "X-Vault-Token: $BAO_TOKEN" \
+        --data "{\"installation_id\":\"$GITHUB_INSTALLATION_ID\"}" \
+        "$OPENBAO_ADDR/v1/github/token")
+      GH_TOKEN=$(echo "$GH_RESPONSE" | jq -r .data.token | tr -d '\n')
+      if [ -z "$GH_TOKEN" ] || [ "$GH_TOKEN" = "null" ]; then
+        echo "ERROR: Failed to obtain GitHub installation token. Response: $GH_RESPONSE"
+        exit 1
+      fi
 
       IMAGE_NAME=$(echo "ghcr.io/$GITHUB_USER/voidlink" | tr '[:upper:]' '[:lower:]')
       REPO_URL="https://github.com/$GITHUB_USER/voidlink"
-      # Use character classes to safely match $$ without shell/regex escaping hell
-      sed -i "s|[\$\$][\$\$]IMAGE_NAME[\$\$][\$\$]|$IMAGE_NAME:latest|g" README.md
-      sed -i "s|[\$\$][\$\$]REPO_URL[\$\$][\$\$]|$REPO_URL|g" Dockerfile README.md
+      # [$][$] matches a literal $$ in sed without shell expansion conflicts
+      sed -i "s|[\\$][\\$]IMAGE_NAME[\\$][\\$]|${IMAGE_NAME}:latest|g" README.md
+      sed -i "s|[\\$][\\$]REPO_URL[\\$][\\$]|${REPO_URL}|g" Dockerfile README.md
 
       git config user.name "GitLab CI"
       git config user.email "ci@$CI_SERVER_HOST"
+
+      # Embed token in remote URL for push auth, then revoke AFTER push
+      git remote add github "https://$GITHUB_USER:${GH_TOKEN}@$GITHUB_REPO"
+
       git add README.md Dockerfile .github/workflows/
-      git commit -m "docs: bake image name and repo URLs for release" || echo "No changes to mirror files"
+      # Only commit if there are staged changes; avoids a fatal "nothing to commit" exit
+      git diff --cached --quiet || git commit -m "docs: bake image name and repo URLs for release"
       git push --force github HEAD:refs/heads/$CI_COMMIT_REF_NAME
-  allow_failure: true
+
+      echo "Revoking token at GitHub..."
+      curl -sf -X DELETE \
+        -H "Authorization: Bearer $GH_TOKEN" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        https://api.github.com/installation/token
+  only:
+    - main
+    - tags

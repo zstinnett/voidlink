@@ -27,7 +27,10 @@ secret_detection:
     - |
       if [ -n "$INTERNAL_DOMAIN_REGEXP" ]; then
         echo "Injecting internal domain patterns into secret detection rules..."
-        sed -i "s|INTERNAL_DOMAIN_REGEXP_PLACEHOLDER|$INTERNAL_DOMAIN_REGEXP|g" .gitlab/secret-detection-ruleset.toml
+        ESCAPED=$(printf '%s' "$INTERNAL_DOMAIN_REGEXP" | sed 's/[\&]/\\&/g')
+        awk -v rep="$ESCAPED" '{ gsub("INTERNAL_DOMAIN_REGEXP_PLACEHOLDER", rep); print }' \
+          .gitlab/secret-detection-ruleset.toml > /tmp/_ruleset.toml
+        mv /tmp/_ruleset.toml .gitlab/secret-detection-ruleset.toml
       fi
 
 # 2. Run Static Analysis & Dependency checks
