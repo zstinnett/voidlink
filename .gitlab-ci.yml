@@ -23,14 +23,27 @@ variables:
 # 1. Run Secrets check FIRST (Fail cheapest/fastest)
 secret_detection:
   stage: secrets
+  allow_failure: false
   before_script:
     - |
       if [ -n "$INTERNAL_DOMAIN_REGEXP" ]; then
         echo "Injecting internal domain patterns into secret detection rules..."
-        ESCAPED=$(printf '%s' "$INTERNAL_DOMAIN_REGEXP" | sed 's/[\&]/\\&/g')
-        awk -v rep="$ESCAPED" '{ gsub("INTERNAL_DOMAIN_REGEXP_PLACEHOLDER", rep); print }' \
-          .gitlab/secret-detection-ruleset.toml > /tmp/_ruleset.toml
-        mv /tmp/_ruleset.toml .gitlab/secret-detection-ruleset.toml
+        # 1. Double the backslashes for TOML triple-double-quoted strings
+        # 2. Use a literal awk replacement to avoid & and \n issues
+        export REGEXP_FOR_TOML=$(printf '%s' "$INTERNAL_DOMAIN_REGEXP" | sed 's/\\/\\\\/g')
+        awk '
+          BEGIN {
+            s = "INTERNAL_DOMAIN_REGEXP_PLACEHOLDER"
+            r = ENVIRON["REGEXP_FOR_TOML"]
+          }
+          {
+            while (i = index($0, s)) {
+              $0 = substr($0, 1, i-1) r substr($0, i+length(s))
+            }
+            print
+          }
+        ' .gitlab/secret-detection-ruleset.toml > .gitlab/ruleset.toml.tmp
+        mv .gitlab/ruleset.toml.tmp .gitlab/secret-detection-ruleset.toml
       fi
 
 # 2. Run Static Analysis & Dependency checks
