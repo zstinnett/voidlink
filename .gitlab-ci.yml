@@ -24,6 +24,14 @@ variables:
 secret_detection:
   stage: secrets
   allow_failure: false
+  # Maintain least privilege by explicitly passing the custom regex variable
+  # AND the GitLab predefined variables required to pull the scanner image.
+  inherit:
+    variables:
+      - INTERNAL_DOMAIN_REGEXP
+      - SECURE_ANALYZERS_PREFIX
+      - SECRETS_ANALYZER_VERSION
+      - CI_TEMPLATE_REGISTRY_HOST
   before_script:
     - |
       if [ -n "$INTERNAL_DOMAIN_REGEXP" ]; then
