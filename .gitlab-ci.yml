@@ -24,11 +24,6 @@ variables:
 secret_detection:
   stage: secrets
   allow_failure: false
-  # Only pass the one custom var needed for domain-pattern injection.
-  # Everything else (GITHUB_TOKEN, OPENBAO_ADDR, etc.) is blocked.
-  inherit:
-    variables:
-      - INTERNAL_DOMAIN_REGEXP
   before_script:
     - |
       if [ -n "$INTERNAL_DOMAIN_REGEXP" ]; then
