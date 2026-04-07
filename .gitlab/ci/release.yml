@@ -27,23 +27,32 @@ gh_release:
   image: docker:24.0.5
   services:
     - docker:24.0.5-dind
-  # GitHub release needs GITHUB_TOKEN/GITHUB_USER AND registry creds to copy
-  # the image across. No other custom secrets are required.
+  id_tokens:
+    VAULT_ID_TOKEN:
+      aud: "voidlink-github-release"
+  # GitHub release needs GITHUB_USER and OPENBAO_ADDR. No static GITHUB_TOKEN required.
   inherit:
     variables: false
   variables:
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: ""
     GITHUB_USER: "$GITHUB_USER"
-    GITHUB_TOKEN: "$GITHUB_TOKEN"
+    OPENBAO_ADDR: "$OPENBAO_ADDR"
+    GITHUB_INSTALLATION_ID: "$GITHUB_INSTALLATION_ID"
   script:
     - |
-      if [ -z "$GITHUB_USER" ] || [ -z "$GITHUB_TOKEN" ]; then
-        echo "GITHUB_USER or GITHUB_TOKEN not set. Skipping GitHub release."
+      if [ -z "$GITHUB_USER" ] || [ -z "$OPENBAO_ADDR" ]; then
+        echo "GITHUB_USER or OPENBAO_ADDR not set. Skipping GitHub release."
         exit 0
       fi
+    - apk add --no-cache curl jq
+    - echo "Authenticating with OpenBao via JWT..."
+    - BAO_TOKEN=$(curl -s --request POST --data '{"jwt":"'"$VAULT_ID_TOKEN"'","role":"voidlink-ci"}' $OPENBAO_ADDR/v1/auth/jwt/login | jq -r .auth.client_token)
+    # 2. Get dynamic GitHub token
+    - echo "Generating dynamic GitHub token via OpenBao..."
+    - curl -s --request POST --header "X-Vault-Token: $BAO_TOKEN" --data '{"installation_id":"'"$GITHUB_INSTALLATION_ID"'"}' $OPENBAO_ADDR/v1/github/token | jq -r .data.token | tr -d '\n' > /dev/shm/ghtoken.txt
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+    - cat /dev/shm/ghtoken.txt | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
     - docker buildx create --use --driver-opt network=host
     # Force lowercase for GitHub repository to avoid invalid reference format
     - GH_IMAGE_NAME=$(echo "ghcr.io/$GITHUB_USER/voidlink" | tr '[:upper:]' '[:lower:]')
@@ -52,6 +61,10 @@ gh_release:
       if [ -n "$CI_COMMIT_TAG" ]; then
         docker buildx imagetools create -t $GH_IMAGE_NAME:$CI_COMMIT_TAG $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
       fi
+    # Immediately revoke the token at GitHub to shrink the exposure window to zero!
+    - echo "Revoking token at GitHub..."
+    - 'curl -s -X DELETE -H "Authorization: Bearer $(cat /dev/shm/ghtoken.txt)" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/installation/token || true'
+    - rm -f /dev/shm/ghtoken.txt
     - echo "Successfully published to GHCR!"
     - echo "View your package at https://github.com/users/$GITHUB_USER/packages/container/package/voidlink"
   only:

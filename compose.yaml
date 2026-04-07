@@ -1,6 +1,6 @@
 services:
   voidlink:
-    image: gcr.dontfail.net/apps/voidlink:latest
+    image: ${VOIDLINK_IMAGE:-voidlink:latest}
     container_name: voidlink
     healthcheck:
       test: ["CMD-SHELL", "ip link show wg0 || exit 1"]

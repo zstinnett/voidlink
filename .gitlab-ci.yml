@@ -23,6 +23,12 @@ variables:
 # 1. Run Secrets check FIRST (Fail cheapest/fastest)
 secret_detection:
   stage: secrets
+  before_script:
+    - |
+      if [ -n "$INTERNAL_DOMAIN_REGEXP" ]; then
+        echo "Injecting internal domain patterns into secret detection rules..."
+        sed -i "s|INTERNAL_DOMAIN_REGEXP_PLACEHOLDER|$INTERNAL_DOMAIN_REGEXP|g" .gitlab/secret-detection-ruleset.toml
+      fi
 
 # 2. Run Static Analysis & Dependency checks
 sast:

@@ -5,7 +5,7 @@ renovate:
     variables: false
   variables:
     RENOVATE_PLATFORM: gitlab
-    RENOVATE_ENDPOINT: https://gitlab.dontfail.us/api/v4
+    RENOVATE_ENDPOINT: $CI_SERVER_URL/api/v4
     RENOVATE_TOKEN: $CI_JOB_TOKEN
     RENOVATE_AUTODISCOVER: "false"
     RENOVATE_REPOSITORIES: '["apps/voidlink"]'
