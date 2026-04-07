@@ -47,21 +47,26 @@ gh_release:
       fi
     - apk add --no-cache curl jq
     - echo "Authenticating with OpenBao via JWT..."
-    - BAO_TOKEN=$(curl -s --request POST --data '{"jwt":"'"$VAULT_ID_TOKEN"'","role":"voidlink-ci"}' $OPENBAO_ADDR/v1/auth/jwt/login | jq -r .auth.client_token)
-    # 2. Get dynamic GitHub token
-    - echo "Generating dynamic GitHub token via OpenBao..."
-    - curl -s --request POST --header "X-Vault-Token: $BAO_TOKEN" --data '{"installation_id":"'"$GITHUB_INSTALLATION_ID"'"}' $OPENBAO_ADDR/v1/github/token | jq -r .data.token | tr -d '\n' > /dev/shm/ghtoken.txt
+    - |
+      BAO_TOKEN=$(curl -s \
+        --request POST \
+        --data "{\"jwt\":\"$VAULT_ID_TOKEN\",\"role\":\"voidlink-ci\"}" \
+        "$OPENBAO_ADDR/v1/auth/jwt/login" | jq -r .auth.client_token)
+      echo "Generating dynamic GitHub token via OpenBao..."
+      curl -s \
+        --request POST \
+        --header "X-Vault-Token: $BAO_TOKEN" \
+        --data "{\"installation_id\":\"$GITHUB_INSTALLATION_ID\"}" \
+        "$OPENBAO_ADDR/v1/github/token" | jq -r .data.token | tr -d '\n' > /dev/shm/ghtoken.txt
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - cat /dev/shm/ghtoken.txt | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
     - docker buildx create --use --driver-opt network=host
-    # Force lowercase for GitHub repository to avoid invalid reference format
     - GH_IMAGE_NAME=$(echo "ghcr.io/$GITHUB_USER/voidlink" | tr '[:upper:]' '[:lower:]')
     - docker buildx imagetools create -t $GH_IMAGE_NAME:latest $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - |
       if [ -n "$CI_COMMIT_TAG" ]; then
         docker buildx imagetools create -t $GH_IMAGE_NAME:$CI_COMMIT_TAG $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
       fi
-    # Immediately revoke the token at GitHub to shrink the exposure window to zero!
     - echo "Revoking token at GitHub..."
     - |
       curl -s -X DELETE \
