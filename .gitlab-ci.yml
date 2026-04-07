@@ -6,7 +6,6 @@ stages:
   - security
   - release
   - mirror
-  - renovate
 
 include:
   - local: "/.gitlab/ci/build.yml"
@@ -14,7 +13,6 @@ include:
   - local: "/.gitlab/ci/security.yml"
   - local: "/.gitlab/ci/release.yml"
   - local: "/.gitlab/ci/mirror.yml"
-  - local: "/.gitlab/ci/renovate.yml"
   - template: Security/SAST.gitlab-ci.yml
   - template: Jobs/Secret-Detection.gitlab-ci.yml
 
