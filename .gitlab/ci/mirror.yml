@@ -15,7 +15,6 @@ mirror_to_github:
       - GITHUB_REPO
       - GITHUB_USER
       - OPENBAO_ADDR
-      - GITHUB_INSTALLATION_ID
   variables:
     GIT_DEPTH: "0"
   script:
@@ -39,8 +38,7 @@ mirror_to_github:
       echo "Fetching dynamic GitHub token..."
       GH_RESPONSE=$(curl -sS --request POST \
         --header "X-Vault-Token: $BAO_TOKEN" \
-        --data "{\"installation_id\":\"$GITHUB_INSTALLATION_ID\"}" \
-        "$OPENBAO_ADDR/v1/github/token")
+        "$OPENBAO_ADDR/v1/github/token/voidlink-release")
       GH_TOKEN=$(echo "$GH_RESPONSE" | jq -r '.data.token' | tr -d '\n')
       if [ -z "$GH_TOKEN" ] || [ "$GH_TOKEN" = "null" ]; then
         echo "ERROR: Failed to obtain GitHub installation token. Response: $GH_RESPONSE"

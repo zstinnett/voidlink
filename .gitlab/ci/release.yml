@@ -60,8 +60,7 @@ gh_release:
       echo "Generating dynamic GitHub token via OpenBao..."
       GH_RESPONSE=$(curl -sS --request POST \
         --header "X-Vault-Token: $BAO_TOKEN" \
-        --data "{\"installation_id\":\"$GITHUB_INSTALLATION_ID\"}" \
-        "$OPENBAO_ADDR/v1/github/token")
+        "$OPENBAO_ADDR/v1/github/token/voidlink-release")
       GH_TOKEN=$(echo "$GH_RESPONSE" | jq -r '.data.token' | tr -d '\n')
       if [ -z "$GH_TOKEN" ] || [ "$GH_TOKEN" = "null" ]; then
         echo "ERROR: Failed to obtain GitHub installation token. Response: $GH_RESPONSE"
