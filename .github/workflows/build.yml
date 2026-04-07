@@ -81,7 +81,7 @@ jobs:
 
       - name: Create Attestation
         if: github.event_name != 'pull_request'
-        uses: actions/attest-sbom@5765667e4e1a7201c900669528d22081d0f813c2 # v4.1.0
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ steps.build-and-push.outputs.digest }}
