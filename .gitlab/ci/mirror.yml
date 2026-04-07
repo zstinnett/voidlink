@@ -1,7 +1,8 @@
 mirror_to_github:
   stage: release
   needs:
-    - gh_release
+    - job: gh_release
+      optional: true
   # alpine:3.19 provides sh, git, grep, mkdir, sed, tr, awk — all required by the
   # GitLab CI runner wrapper AND our script. cgr.dev/chainguard/git is distroless
   # and lacks even mkdir, causing exit 127 before user code runs.

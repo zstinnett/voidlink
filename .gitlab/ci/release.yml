@@ -22,69 +22,69 @@ gl_release:
     - if: $CI_COMMIT_BRANCH
     - if: $CI_COMMIT_TAG
 
-gh_release:
-  stage: release
-  image: docker:24.0.5
-  services:
-    - docker:24.0.5-dind
-  id_tokens:
-    VAULT_ID_TOKEN:
-      aud: "voidlink-github-release"
-  # GitHub release needs specific vars. Pass them via list form.
-  inherit:
-    variables:
-      - GITHUB_USER
-      - OPENBAO_ADDR
-      - GITHUB_INSTALLATION_ID
-  variables:
-    DOCKER_DRIVER: overlay2
-    DOCKER_TLS_CERTDIR: ""
-  script:
-    - |
-      if [ -z "$GITHUB_USER" ] || [ -z "$OPENBAO_ADDR" ]; then
-        echo "GITHUB_USER or OPENBAO_ADDR not set. Skipping GitHub release."
-        exit 0
-      fi
-    - apk add --no-cache curl jq
-    - |
-      echo "Authenticating with OpenBao via JWT..."
-      BAO_RESPONSE=$(curl -sS --request POST \
-        --data "{\"jwt\":\"$VAULT_ID_TOKEN\",\"role\":\"voidlink-ci\"}" \
-        "$OPENBAO_ADDR/v1/auth/jwt/login")
-      BAO_TOKEN=$(echo "$BAO_RESPONSE" | jq -r .auth.client_token)
-      if [ -z "$BAO_TOKEN" ] || [ "$BAO_TOKEN" = "null" ]; then
-        echo "ERROR: OpenBao JWT login failed. Response: $BAO_RESPONSE"
-        exit 1
-      fi
-
-      echo "Generating dynamic GitHub token via OpenBao..."
-      GH_RESPONSE=$(curl -sS --request POST \
-        --header "X-Vault-Token: $BAO_TOKEN" \
-        "$OPENBAO_ADDR/v1/github/token/voidlink-release")
-      GH_TOKEN=$(echo "$GH_RESPONSE" | jq -r '.data.token' | tr -d '\n')
-      if [ -z "$GH_TOKEN" ] || [ "$GH_TOKEN" = "null" ]; then
-        echo "ERROR: Failed to obtain GitHub installation token. Response: $GH_RESPONSE"
-        exit 1
-      fi
-      printf '%s' "$GH_TOKEN" > /dev/shm/ghtoken.txt
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - cat /dev/shm/ghtoken.txt | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
-    - docker buildx create --use --driver-opt network=host
-    - GH_IMAGE_NAME=$(echo "ghcr.io/$GITHUB_USER/voidlink" | tr '[:upper:]' '[:lower:]')
-    - docker buildx imagetools create -t $GH_IMAGE_NAME:latest $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-    - |
-      if [ -n "$CI_COMMIT_TAG" ]; then
-        docker buildx imagetools create -t $GH_IMAGE_NAME:$CI_COMMIT_TAG $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-      fi
-    - |
-      echo "Revoking token at GitHub..."
-      curl -sS -X DELETE \
-        -H "Authorization: Bearer $(cat /dev/shm/ghtoken.txt)" \
-        -H "X-GitHub-Api-Version: 2022-11-28" \
-        https://api.github.com/installation/token
-      rm -f /dev/shm/ghtoken.txt
-    - echo "Successfully published to GHCR!"
-    - echo "View your package at https://github.com/users/$GITHUB_USER/packages/container/package/voidlink"
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-    - if: $CI_COMMIT_TAG
+# gh_release:  # COMMENTED OUT - moved to GitHub Actions workflow
+#   stage: release
+#   image: docker:24.0.5
+#   services:
+#     - docker:24.0.5-dind
+#   id_tokens:
+#     VAULT_ID_TOKEN:
+#       aud: "voidlink-github-release"
+#   # GitHub release needs specific vars. Pass them via list form.
+#   inherit:
+#     variables:
+#       - GITHUB_USER
+#       - OPENBAO_ADDR
+#       - GITHUB_INSTALLATION_ID
+#   variables:
+#     DOCKER_DRIVER: overlay2
+#     DOCKER_TLS_CERTDIR: ""
+#   script:
+#     - |
+#       if [ -z "$GITHUB_USER" ] || [ -z "$OPENBAO_ADDR" ]; then
+#         echo "GITHUB_USER or OPENBAO_ADDR not set. Skipping GitHub release."
+#         exit 0
+#       fi
+#     - apk add --no-cache curl jq
+#     - |
+#       echo "Authenticating with OpenBao via JWT..."
+#       BAO_RESPONSE=$(curl -sS --request POST \
+#         --data "{\"jwt\":\"$VAULT_ID_TOKEN\",\"role\":\"voidlink-ci\"}" \
+#         "$OPENBAO_ADDR/v1/auth/jwt/login")
+#       BAO_TOKEN=$(echo "$BAO_RESPONSE" | jq -r .auth.client_token)
+#       if [ -z "$BAO_TOKEN" ] || [ "$BAO_TOKEN" = "null" ]; then
+#         echo "ERROR: OpenBao JWT login failed. Response: $BAO_RESPONSE"
+#         exit 1
+#       fi
+#
+#       echo "Generating dynamic GitHub token via OpenBao..."
+#       GH_RESPONSE=$(curl -sS --request POST \
+#         --header "X-Vault-Token: $BAO_TOKEN" \
+#         "$OPENBAO_ADDR/v1/github/token/voidlink-release")
+#       GH_TOKEN=$(echo "$GH_RESPONSE" | jq -r '.data.token' | tr -d '\n')
+#       if [ -z "$GH_TOKEN" ] || [ "$GH_TOKEN" = "null" ]; then
+#         echo "ERROR: Failed to obtain GitHub installation token. Response: $GH_RESPONSE"
+#         exit 1
+#       fi
+#       printf '%s' "$GH_TOKEN" > /dev/shm/ghtoken.txt
+#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+#     - cat /dev/shm/ghtoken.txt | docker login ghcr.io -u "x-access-token" --password-stdin
+#     - docker buildx create --use --driver-opt network=host
+#     - GH_IMAGE_NAME=$(echo "ghcr.io/$GITHUB_USER/voidlink" | tr '[:upper:]' '[:lower:]')
+#     - docker buildx imagetools create -t $GH_IMAGE_NAME:latest $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+#     - |
+#       if [ -n "$CI_COMMIT_TAG" ]; then
+#         docker buildx imagetools create -t $GH_IMAGE_NAME:$CI_COMMIT_TAG $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+#       fi
+#     - |
+#       echo "Revoking token at GitHub..."
+#       curl -sS -X DELETE \
+#         -H "Authorization: Bearer $(cat /dev/shm/ghtoken.txt)" \
+#         -H "X-GitHub-Api-Version: 2022-11-28" \
+#         https://api.github.com/installation/token
+#       rm -f /dev/shm/ghtoken.txt
+#     - echo "Successfully published to GHCR!"
+#     - echo "View your package at https://github.com/users/$GITHUB_USER/packages/container/package/voidlink"
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == "main"
+#     - if: $CI_COMMIT_TAG
