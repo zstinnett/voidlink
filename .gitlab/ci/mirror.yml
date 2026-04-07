@@ -1,8 +1,7 @@
 mirror_to_github:
-  stage: release
+  stage: mirror
   needs:
-    - job: gh_release
-      optional: true
+    - job: gl_release
   # alpine:3.19 provides sh, git, grep, mkdir, sed, tr, awk — all required by the
   # GitLab CI runner wrapper AND our script. cgr.dev/chainguard/git is distroless
   # and lacks even mkdir, causing exit 127 before user code runs.
@@ -61,7 +60,13 @@ mirror_to_github:
       git add README.md Dockerfile .github/workflows/
       # Only commit if there are staged changes; avoids a fatal "nothing to commit" exit
       git diff --cached --quiet || git commit -m "docs: bake image name and repo URLs for release"
-      git push --force github HEAD:refs/heads/$CI_COMMIT_REF_NAME
+      PUSH_OPTS=""
+      if [ "$DRY_RUN" = "true" ]; then
+        echo "Dry run mode enabled. Changes will not be pushed to GitHub."
+        PUSH_OPTS="--dry-run"
+      fi
+
+      git push --force $PUSH_OPTS github HEAD:refs/heads/$CI_COMMIT_REF_NAME
 
       echo "Revoking token at GitHub..."
       curl -sS -X DELETE \

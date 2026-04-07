@@ -5,6 +5,7 @@ stages:
   - test
   - security
   - release
+  - mirror
   - renovate
 
 include:
