@@ -30,18 +30,15 @@ gh_release:
   id_tokens:
     VAULT_ID_TOKEN:
       aud: "voidlink-github-release"
-  # GitHub release needs GITHUB_USER and OPENBAO_ADDR. No static GITHUB_TOKEN required.
-  # inherit: variables: false + explicit per-job declarations = least-privilege: each job
-  # only receives the vars it declares. $VAR on the RHS is expanded by GitLab from the
-  # project CI variable store (not the YAML global scope) — this is intentional design.
+  # GitHub release needs specific vars. Pass them via list form.
   inherit:
-    variables: false
+    variables:
+      - GITHUB_USER
+      - OPENBAO_ADDR
+      - GITHUB_INSTALLATION_ID
   variables:
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: ""
-    GITHUB_USER: "$GITHUB_USER"
-    OPENBAO_ADDR: "$OPENBAO_ADDR"
-    GITHUB_INSTALLATION_ID: "$GITHUB_INSTALLATION_ID"
   script:
     - |
       if [ -z "$GITHUB_USER" ] || [ -z "$OPENBAO_ADDR" ]; then

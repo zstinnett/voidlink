@@ -24,6 +24,11 @@ variables:
 secret_detection:
   stage: secrets
   allow_failure: false
+  # Only pass the one custom var needed for domain-pattern injection.
+  # Everything else (GITHUB_TOKEN, OPENBAO_ADDR, etc.) is blocked.
+  inherit:
+    variables:
+      - INTERNAL_DOMAIN_REGEXP
   before_script:
     - |
       if [ -n "$INTERNAL_DOMAIN_REGEXP" ]; then
@@ -50,6 +55,9 @@ secret_detection:
 enforce_secrets_gate:
   stage: pre-build # Execute before Build to prevent leaking secrets into images
   image: cgr.dev/chainguard/wolfi-base:latest
+  # This job reads a local artifact only — it needs zero project secrets.
+  inherit:
+    variables: false
   dependencies:
     - secret_detection
   script:

@@ -1,5 +1,7 @@
 mirror_to_github:
   stage: release
+  needs:
+    - gh_release
   # alpine:3.19 provides sh, git, grep, mkdir, sed, tr, awk — all required by the
   # GitLab CI runner wrapper AND our script. cgr.dev/chainguard/git is distroless
   # and lacks even mkdir, causing exit 127 before user code runs.
@@ -7,15 +9,14 @@ mirror_to_github:
   id_tokens:
     VAULT_ID_TOKEN:
       aud: "voidlink-github-release"
-  # Pass only the required project variables.
-  # inherit: variables: false + "$VAR" re-declarations does NOT expand project vars; use the list form.
+  # Pass only the required project variables using the list form.
   inherit:
-    variables: false
+    variables:
+      - GITHUB_REPO
+      - GITHUB_USER
+      - OPENBAO_ADDR
+      - GITHUB_INSTALLATION_ID
   variables:
-    GITHUB_REPO: "$GITHUB_REPO"
-    GITHUB_USER: "$GITHUB_USER"
-    OPENBAO_ADDR: "$OPENBAO_ADDR"
-    GITHUB_INSTALLATION_ID: "$GITHUB_INSTALLATION_ID"
     GIT_DEPTH: "0"
   script:
     - apk add --no-cache git curl jq
