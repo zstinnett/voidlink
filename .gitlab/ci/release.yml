@@ -62,7 +62,7 @@ gh_release:
         --header "X-Vault-Token: $BAO_TOKEN" \
         --data "{\"installation_id\":\"$GITHUB_INSTALLATION_ID\"}" \
         "$OPENBAO_ADDR/v1/github/token")
-      GH_TOKEN=$(echo "$GH_RESPONSE" | jq -r .data.token // empty)
+      GH_TOKEN=$(echo "$GH_RESPONSE" | jq -r '.data.token' | tr -d '\n')
       if [ -z "$GH_TOKEN" ] || [ "$GH_TOKEN" = "null" ]; then
         echo "ERROR: Failed to obtain GitHub installation token. Response: $GH_RESPONSE"
         exit 1
