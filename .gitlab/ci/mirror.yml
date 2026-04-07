@@ -27,7 +27,7 @@ mirror_to_github:
       fi
 
       echo "Authenticating via OpenBao JWT..."
-      BAO_RESPONSE=$(curl -sf --request POST \
+      BAO_RESPONSE=$(curl -sS --request POST \
         --data "{\"jwt\":\"$VAULT_ID_TOKEN\",\"role\":\"voidlink-ci\"}" \
         "$OPENBAO_ADDR/v1/auth/jwt/login")
       BAO_TOKEN=$(echo "$BAO_RESPONSE" | jq -r .auth.client_token)
@@ -37,11 +37,11 @@ mirror_to_github:
       fi
 
       echo "Fetching dynamic GitHub token..."
-      GH_RESPONSE=$(curl -sf --request POST \
+      GH_RESPONSE=$(curl -sS --request POST \
         --header "X-Vault-Token: $BAO_TOKEN" \
         --data "{\"installation_id\":\"$GITHUB_INSTALLATION_ID\"}" \
         "$OPENBAO_ADDR/v1/github/token")
-      GH_TOKEN=$(echo "$GH_RESPONSE" | jq -r .data.token | tr -d '\n')
+      GH_TOKEN=$(echo "$GH_RESPONSE" | jq -r .data.token // empty)
       if [ -z "$GH_TOKEN" ] || [ "$GH_TOKEN" = "null" ]; then
         echo "ERROR: Failed to obtain GitHub installation token. Response: $GH_RESPONSE"
         exit 1
@@ -65,7 +65,7 @@ mirror_to_github:
       git push --force github HEAD:refs/heads/$CI_COMMIT_REF_NAME
 
       echo "Revoking token at GitHub..."
-      curl -sf -X DELETE \
+      curl -sS -X DELETE \
         -H "Authorization: Bearer $GH_TOKEN" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         https://api.github.com/installation/token
