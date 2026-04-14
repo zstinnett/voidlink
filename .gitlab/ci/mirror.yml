@@ -5,7 +5,7 @@ mirror_to_github:
   # alpine:3.19 provides sh, git, grep, mkdir, sed, tr, awk — all required by the
   # GitLab CI runner wrapper AND our script. cgr.dev/chainguard/git is distroless
   # and lacks even mkdir, causing exit 127 before user code runs.
-  image: cgr.dev/chainguard/wolfi-base:latest
+  image: cgr.dev/chainguard/wolfi-base:latest@sha256:1af610c4a70668dad46159ee178b20378c79a49b554f76405670fc442d30183a
   id_tokens:
     VAULT_ID_TOKEN:
       aud: "voidlink-github-release"

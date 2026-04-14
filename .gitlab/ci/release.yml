@@ -1,8 +1,8 @@
 gl_release:
   stage: release
-  image: docker:24.0.5
+  image: docker:24.0.5@sha256:3c6e4dca7a63c9a32a4e00da40461ce067f255987ccc9721cf18ffa087bcd1ef
   services:
-    - docker:24.0.5-dind
+    - docker:24.0.5-dind@sha256:3c6e4dca7a63c9a32a4e00da40461ce067f255987ccc9721cf18ffa087bcd1ef
   # GitLab release only needs GitLab registry credentials — no GitHub secrets.
   inherit:
     variables: false

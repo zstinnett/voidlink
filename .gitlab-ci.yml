@@ -56,7 +56,7 @@ secret_detection:
 # 2. Gatekeeper: Fail if ANY secrets were discovered
 enforce_secrets_gate:
   stage: pre-build # Execute before Build to prevent leaking secrets into images
-  image: cgr.dev/chainguard/wolfi-base:latest
+  image: cgr.dev/chainguard/wolfi-base:latest@sha256:1af610c4a70668dad46159ee178b20378c79a49b554f76405670fc442d30183a
   # This job reads a local artifact only — it needs zero project secrets.
   inherit:
     variables: false
