@@ -1,8 +1,8 @@
 test_integration:
   stage: test
-  image: docker:24.0.5@sha256:3c6e4dca7a63c9a32a4e00da40461ce067f255987ccc9721cf18ffa087bcd1ef
+  image: docker:24.0.9@sha256:9b17a9f25adf17b88d0a013b4f00160754adf4b07ccbe9986664a49886c2c98e
   services:
-    - docker:24.0.5-dind@sha256:3c6e4dca7a63c9a32a4e00da40461ce067f255987ccc9721cf18ffa087bcd1ef
+    - docker:24.0.9-dind@sha256:9b17a9f25adf17b88d0a013b4f00160754adf4b07ccbe9986664a49886c2c98e
   dependencies:
     - build
   # Exclude GitHub release secrets — tests only need GitLab registry access.
