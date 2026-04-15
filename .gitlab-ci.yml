@@ -84,7 +84,7 @@ sast:
 trivy_fs_scan:
   stage: pre-build
   image:
-    name: aquasec/trivy:0.49.1@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c
+    name: aquasec/trivy:0.69.3@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c
     entrypoint: [""]
   # Deny all inherited custom CI/CD variables — this job scans local source
   # only and needs zero credentials. GitLab predefined vars (CI_*) are still
