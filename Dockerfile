@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM cgr.dev/chainguard/go:latest@sha256:dd2f00862cec10887ab139765df1539d1a4f2b9499c6aedc75ade40ddc0b7c01 AS builder
+FROM --platform=$BUILDPLATFORM cgr.dev/chainguard/go:latest@sha256:df86b3248633e832d12c3f1777b9e1e03d40f654ab5bd81be3e1a271999d2931 AS builder
 
 WORKDIR /app
 
