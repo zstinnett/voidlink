@@ -5,7 +5,7 @@ go 1.25.5
 require (
 	github.com/amnezia-vpn/amneziawg-go v1.0.4
 	github.com/vishvananda/netlink v1.3.1
-	gopkg.in/ini.v1 v1.67.1
+	gopkg.in/ini.v1 v1.67.2
 )
 
 require (

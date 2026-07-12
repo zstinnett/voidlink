@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM cgr.dev/chainguard/go:latest@sha256:dd2f00862cec10887ab139765df1539d1a4f2b9499c6aedc75ade40ddc0b7c01 AS builder
+FROM --platform=$BUILDPLATFORM cgr.dev/chainguard/go:latest@sha256:df86b3248633e832d12c3f1777b9e1e03d40f654ab5bd81be3e1a271999d2931 AS builder
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /usr/bin/amnezia
 
 # Runtime stage
 # We use wolfi-base to allow installing packages (iproute2) while keeping it minimal.
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:1af610c4a70668dad46159ee178b20378c79a49b554f76405670fc442d30183a
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:0cff4df29a6597173dc8b813787318150141eb96ac783dc3ff4f5ff52c49a1e2
 
 LABEL org.opencontainers.image.source="$$REPO_URL$$"
 LABEL org.opencontainers.image.licenses="MIT"

@@ -56,7 +56,7 @@ secret_detection:
 # 2. Gatekeeper: Fail if ANY secrets were discovered
 enforce_secrets_gate:
   stage: pre-build # Execute before Build to prevent leaking secrets into images
-  image: cgr.dev/chainguard/wolfi-base:latest@sha256:1af610c4a70668dad46159ee178b20378c79a49b554f76405670fc442d30183a
+  image: cgr.dev/chainguard/wolfi-base:latest@sha256:0cff4df29a6597173dc8b813787318150141eb96ac783dc3ff4f5ff52c49a1e2
   # This job reads a local artifact only — it needs zero project secrets.
   inherit:
     variables: false
@@ -84,7 +84,7 @@ sast:
 trivy_fs_scan:
   stage: pre-build
   image:
-    name: aquasec/trivy:0.69.3@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c
+    name: aquasec/trivy:0.70.0@sha256:be1190afcb28352bfddc4ddeb71470835d16462af68d310f9f4bca710961a41e
     entrypoint: [""]
   # Deny all inherited custom CI/CD variables — this job scans local source
   # only and needs zero credentials. GitLab predefined vars (CI_*) are still
