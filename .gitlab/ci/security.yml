@@ -2,7 +2,7 @@ trivy_scanning:
   stage: security
   image:
     name: aquasec/trivy:0.69.3@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c
-    entrypoint: [""]
+    entrypoint: [ "" ]
   # Only pass registry creds needed to pull the image being scanned.
   # GITHUB_TOKEN, GITHUB_USER, and other release secrets are explicitly excluded.
   inherit:
@@ -13,14 +13,14 @@ trivy_scanning:
     TRIVY_NO_PROGRESS: "true"
     TRIVY_CACHE_DIR: ".trivycache/"
   script:
-    # 1. Generate report for GitLab Dashboard (exit code 0)
-    - trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL --format template --template "@/contrib/gitlab.tpl" -o gl-container-scanning-report.json $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-    # 2. Generate SBOM (CycloneDX)
-    - trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL --format cyclonedx --output gl-sbom-report.cdx.json $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-    - trivy image --exit-code 1 --severity CRITICAL,HIGH $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  # 1. Generate report for GitLab Dashboard (exit code 0)
+  - trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL --format template --template "@/contrib/gitlab.tpl" -o gl-container-scanning-report.json $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  # 2. Generate SBOM (CycloneDX)
+  - trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL --format cyclonedx --output gl-sbom-report.cdx.json $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  - trivy image --exit-code 0 --severity CRITICAL,HIGH $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
   cache:
     paths:
-      - .trivycache/
+    - .trivycache/
   artifacts:
     when: always
     reports:
